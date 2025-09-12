@@ -1,0 +1,121 @@
+/* App shell */
+.app-root {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  background: radial-gradient(1000px 600px at 20% 0%, rgba(100,108,255,0.15), transparent),
+              radial-gradient(800px 500px at 100% 100%, rgba(0,0,0,0.2), transparent);
+}
+
+/* Video Chat Layout */
+.vc-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.vc-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.vc-brand {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.vc-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.vc-stage {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 12px;
+  padding: 12px;
+}
+
+.vc-remote, .vc-self {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.vc-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+.vc-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.7);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.vc-controls {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  background: rgba(20,20,20,0.6);
+  padding: 8px;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+}
+
+.vc-btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #1a1a1a;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+}
+.vc-btn.primary { background: #646cff; }
+.vc-btn.secondary { background: #2b2b2b; }
+.vc-btn.danger { background: #e23f3f; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .vc-stage {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Auth styles */
+.auth-root {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.auth-card {
+  width: 360px;
+  background: rgba(20,20,20,0.7);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(6px);
+}
+.auth-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.auth-tabs button { flex: 1; padding: 8px; border-radius: 8px; background: #1a1a1a; color: #fff; border: 1px solid rgba(255,255,255,0.1); }
+.auth-tabs button.active { background: #2b2b2b; }
+.auth-card form { display: grid; gap: 8px; }
+.auth-card input { padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: #0f0f0f; color: #fff; }
+.auth-msg { margin-top: 8px; font-size: 12px; color: #c9c9c9; }
