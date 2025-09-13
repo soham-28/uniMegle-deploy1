@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
+import { useAuth } from '../contexts/AuthContext'
+import WaitingScreen from './WaitingScreen'
 
 export default function VideoChat() {
+  const { currentUser, logout } = useAuth()
   const localVideoRef = useRef(null)
   const remoteVideoRef = useRef(null)
   const [isCameraOn, setIsCameraOn] = useState(true)
@@ -14,7 +17,12 @@ export default function VideoChat() {
   const tracksAddedRef = useRef(false)
   const [remoteReady, setRemoteReady] = useState(false)
   const [remoteMuted, setRemoteMuted] = useState(true)
+  const [connectionState, setConnectionState] = useState('new')
+  const [isWaiting, setIsWaiting] = useState(true)
+  const [activeUsers, setActiveUsers] = useState(0)
+  const [waitingTime, setWaitingTime] = useState(0)
   const remoteStreamRef = useRef(null)
+  const waitingIntervalRef = useRef(null)
 
   useEffect(() => {
     let currentStream
@@ -31,9 +39,28 @@ export default function VideoChat() {
       }
     }
     start()
-    const s = io('http://localhost:4000', { withCredentials: true })
+    const s = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000', { withCredentials: true })
     setSocket(s)
+    
+    // Auto-connect to queue
+    s.on('connect', () => {
+      console.log('Connected to server, joining queue')
+      setIsWaiting(true)
+      setWaitingTime(0)
+      s.emit('enqueue')
+      
+      // Start waiting timer
+      waitingIntervalRef.current = setInterval(() => {
+        setWaitingTime(prev => prev + 1)
+      }, 1000)
+      
+      // Request active users count
+      s.emit('getActiveUsers')
+    })
     s.on('matched', async ({ roomId, role }) => {
+      console.log('Matched with role:', role, 'roomId:', roomId)
+      setIsWaiting(false)
+      clearInterval(waitingIntervalRef.current)
       roomIdRef.current = roomId
       roleRef.current = role
       await ensurePeer()
@@ -41,20 +68,30 @@ export default function VideoChat() {
         const offer = await pcRef.current.createOffer()
         await pcRef.current.setLocalDescription(offer)
         s.emit('signal', { roomId, data: { type: 'offer', sdp: offer.sdp } })
+        console.log('Sent offer as caller')
       }
     })
+    
+    s.on('activeUsers', ({ count }) => {
+      setActiveUsers(count)
+    })
     s.on('signal', async ({ data }) => {
+      console.log('Received signal:', data.type)
       await ensurePeer()
       if (data.type === 'offer') {
+        console.log('Processing offer')
         await pcRef.current.setRemoteDescription({ type: 'offer', sdp: data.sdp })
         const answer = await pcRef.current.createAnswer()
         await pcRef.current.setLocalDescription(answer)
         s.emit('signal', { roomId: roomIdRef.current, data: { type: 'answer', sdp: answer.sdp } })
+        console.log('Sent answer')
       } else if (data.type === 'answer') {
+        console.log('Processing answer')
         await pcRef.current.setRemoteDescription({ type: 'answer', sdp: data.sdp })
       } else if (data.type === 'candidate') {
         try {
           await pcRef.current.addIceCandidate(data.candidate)
+          console.log('Added ICE candidate')
         } catch (e) {
           // eslint-disable-next-line no-console
           console.error('ICE add error', e)
@@ -65,6 +102,7 @@ export default function VideoChat() {
     return () => {
       currentStream?.getTracks().forEach(t => t.stop())
       if (pcRef.current) pcRef.current.close()
+      clearInterval(waitingIntervalRef.current)
       s.close()
     }
   }, [])
@@ -109,17 +147,22 @@ export default function VideoChat() {
       }
     }
     pc.ontrack = (event) => {
+      console.log('Received remote track:', event.track.kind)
       // Aggregate tracks into one MediaStream for the video element
       if (!remoteStreamRef.current) remoteStreamRef.current = new MediaStream()
       if (event.track && !remoteStreamRef.current.getTracks().includes(event.track)) {
         remoteStreamRef.current.addTrack(event.track)
+        console.log('Added track to remote stream. Total tracks:', remoteStreamRef.current.getTracks().length)
       }
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = remoteStreamRef.current
         setRemoteReady(true)
+        console.log('Set remote video srcObject')
       }
     }
     pc.onconnectionstatechange = () => {
+      console.log('Connection state:', pc.connectionState)
+      setConnectionState(pc.connectionState)
       if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
         setRemoteReady(false)
       }
@@ -138,28 +181,73 @@ export default function VideoChat() {
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null
     setRemoteReady(false)
     setRemoteMuted(true)
+    setConnectionState('new')
+    setIsWaiting(true)
+    setWaitingTime(0)
+    clearInterval(waitingIntervalRef.current)
+    waitingIntervalRef.current = setInterval(() => {
+      setWaitingTime(prev => prev + 1)
+    }, 1000)
     socket.emit('enqueue')
+  }
+
+  if (isWaiting) {
+    return (
+      <div className="vc-root">
+        <header className="vc-header">
+          <div className="vc-brand">Unimegle</div>
+          <div className="vc-user-info">
+            {currentUser && (
+              <span className="vc-user-email">{currentUser.email}</span>
+            )}
+          </div>
+          <div className="vc-actions">
+            <button className="vc-btn danger" onClick={logout}>Logout</button>
+          </div>
+        </header>
+        <WaitingScreen 
+          activeUsers={activeUsers}
+          waitingTime={waitingTime}
+          localVideoRef={localVideoRef}
+          onCancel={() => {
+            setIsWaiting(false)
+            clearInterval(waitingIntervalRef.current)
+            if (socket) socket.emit('leave', { roomId: roomIdRef.current })
+          }}
+        />
+      </div>
+    )
   }
 
   return (
     <div className="vc-root">
       <header className="vc-header">
         <div className="vc-brand">Unimegle</div>
+        <div className="vc-user-info">
+          {currentUser && (
+            <span className="vc-user-email">{currentUser.email}</span>
+          )}
+        </div>
         <div className="vc-actions">
           <button className="vc-btn secondary" onClick={() => { /* report placeholder */ }}>Report</button>
-          <button className="vc-btn danger" onClick={() => { /* end placeholder */ }}>End</button>
+          <button className="vc-btn danger" onClick={logout}>Logout</button>
         </div>
       </header>
       <main className="vc-stage">
         <section className="vc-remote">
           <video ref={remoteVideoRef} className="vc-video remote" autoPlay playsInline muted={remoteMuted} />
-          {!remoteReady && <div className="vc-placeholder">Waiting for a match...</div>}
+          {!remoteReady && <div className="vc-placeholder">Waiting for a match... (State: {connectionState})</div>}
           {remoteReady && remoteMuted && (
             <div className="vc-controls" style={{ bottom: 20 }}>
               <button className="vc-btn primary" onClick={() => {
                 setRemoteMuted(false)
                 if (remoteVideoRef.current) remoteVideoRef.current.muted = false
               }}>Unmute</button>
+            </div>
+          )}
+          {remoteReady && !remoteMuted && (
+            <div className="vc-controls" style={{ bottom: 20 }}>
+              <span style={{ color: 'green', fontSize: '12px' }}>Connected ({connectionState})</span>
             </div>
           )}
         </section>

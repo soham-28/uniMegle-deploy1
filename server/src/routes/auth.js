@@ -14,8 +14,16 @@ const signupSchema = z.object({
   name: z.string().min(1),
 });
 
-function isCollegeEmail(email) {
-  return /\.(edu|ac\.[a-z]{2})$/i.test(email);
+// Allowed email domains - add more domains here as needed
+const ALLOWED_EMAIL_DOMAINS = [
+  '@adypu.edu.in',
+  '@scmspune.ac.in'
+];
+
+function isAllowedEmail(email) {
+  return ALLOWED_EMAIL_DOMAINS.some(domain => 
+    email.toLowerCase().endsWith(domain.toLowerCase())
+  );
 }
 
 router.post('/signup', async (req, res) => {
@@ -23,8 +31,8 @@ router.post('/signup', async (req, res) => {
   if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
   const { email, password, name } = parse.data;
 
-  if (!isCollegeEmail(email)) {
-    return res.status(400).json({ error: 'College email required' });
+  if (!isAllowedEmail(email)) {
+    return res.status(400).json({ error: 'Email domain not allowed. Please use an authorized educational institution email.' });
   }
 
   const existing = await query('SELECT id FROM users WHERE email=?', [email]);

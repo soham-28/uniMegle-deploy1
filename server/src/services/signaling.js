@@ -31,6 +31,11 @@ export function registerSignaling(io) {
       // eslint-disable-next-line no-console
       console.log('enqueue', socket.id)
       if (!waitingQueue.includes(socket.id)) waitingQueue.push(socket.id);
+      
+      // Broadcast active users count
+      const activeCount = io.sockets.sockets.size;
+      io.emit('activeUsers', { count: activeCount });
+      
       if (waitingQueue.length >= 2) {
         const a = waitingQueue.shift();
         const b = waitingQueue.shift();
@@ -40,6 +45,11 @@ export function registerSignaling(io) {
         console.log('pairing', a, b)
         if (sa && sb) pairSockets(sa, sb);
       }
+    });
+    
+    socket.on('getActiveUsers', () => {
+      const activeCount = io.sockets.sockets.size;
+      socket.emit('activeUsers', { count: activeCount });
     });
 
     socket.on('signal', ({ roomId, data }) => {
@@ -61,6 +71,10 @@ export function registerSignaling(io) {
       for (const [userIdKey, sid] of userToSocket.entries()) {
         if (sid === socket.id) userToSocket.delete(userIdKey);
       }
+      
+      // Broadcast updated active users count
+      const activeCount = io.sockets.sockets.size;
+      io.emit('activeUsers', { count: activeCount });
     });
   });
 }

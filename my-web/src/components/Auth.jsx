@@ -41,7 +41,7 @@ export default function Auth({ onAuthed }) {
               {mode==='signup' && (
                 <input placeholder="Name" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} required />
               )}
-              <input placeholder="College Email" type="email" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} required />
+              <input placeholder="College Email (@adypu.edu.in, @scmspune.ac.in)" type="email" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} required />
               <input placeholder="Password" type="password" value={form.password} onChange={e=>setForm({...form, password:e.target.value})} required />
             </>
           )}
