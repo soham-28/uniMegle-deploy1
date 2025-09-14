@@ -39,8 +39,17 @@ export default function VideoChat() {
       }
     }
     start()
+    console.log('Attempting to connect to:', import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000')
     const s = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000', { withCredentials: true })
     setSocket(s)
+    
+    s.on('connect_error', (error) => {
+      console.error('Socket connection error:', error)
+    })
+    
+    s.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason)
+    })
     
     // Auto-connect to queue
     s.on('connect', () => {
