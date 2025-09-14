@@ -1,17 +1,36 @@
 {
   "name": "unimegle-backend",
   "version": "1.0.0",
-  "description": "College Omegle Backend Server",
-  "main": "server/src/index.js",
+  "main": "src/index.js",
   "scripts": {
-    "start": "cd server && node src/index.js",
-    "dev": "cd server && npm run dev",
-    "build": "cd server && npm install"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js"
   },
   "keywords": ["video-chat", "college", "matchmaking"],
   "author": "soham-28",
   "license": "ISC",
+  "description": "College Omegle Backend Server",
+  "type": "module",
   "engines": {
     "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.14.5",
+    "nodemailer": "^7.0.6",
+    "pg": "^8.16.3",
+    "socket.io": "^4.8.1",
+    "uuid": "^13.0.0",
+    "zod": "^4.1.8"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
   }
 }
