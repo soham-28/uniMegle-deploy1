@@ -57,6 +57,12 @@ export default function VideoChat() {
     
     s.on('disconnect', (reason) => {
       console.log('Socket disconnected:', reason)
+      // Clear timer on disconnect
+      if (waitingIntervalRef.current) {
+        clearInterval(waitingIntervalRef.current)
+        waitingIntervalRef.current = null
+      }
+      setIsWaiting(false)
     })
     
     // Auto-connect to queue
@@ -66,8 +72,14 @@ export default function VideoChat() {
       setWaitingTime(0)
       s.emit('enqueue')
       
+      // Clear any existing timer before starting new one
+      if (waitingIntervalRef.current) {
+        clearInterval(waitingIntervalRef.current)
+      }
+      
       // Start waiting timer
       waitingIntervalRef.current = setInterval(() => {
+        console.log('Timer tick - incrementing waiting time')
         setWaitingTime(prev => prev + 1)
       }, 1000)
       
