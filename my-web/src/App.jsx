@@ -16,12 +16,13 @@ function AppContent() {
     
     // You can add logic here to determine if guest mode should be enabled
     // For now, we'll only show guest mode if there's no Firebase config
-    const hasFirebaseConfig = import.meta.env.VITE_FIREBASE_API_KEY || 
-                             window.location.hostname === 'localhost'
+    const hasFirebaseConfig = import.meta.env.VITE_FIREBASE_API_KEY
     
-    if (!hasFirebaseConfig) {
-      enableGuestMode()
-    }
+    // Temporarily disable auto guest mode to force login page
+    // Uncomment the line below to enable guest mode when no Firebase config
+    // if (!hasFirebaseConfig) {
+    //   enableGuestMode()
+    // }
   }, [])
 
   return (
