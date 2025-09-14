@@ -1,0 +1,17 @@
+{
+  "name": "unimegle-backend",
+  "version": "1.0.0",
+  "description": "College Omegle Backend Server",
+  "main": "server/src/index.js",
+  "scripts": {
+    "start": "cd server && node src/index.js",
+    "dev": "cd server && npm run dev",
+    "build": "cd server && npm install"
+  },
+  "keywords": ["video-chat", "college", "matchmaking"],
+  "author": "soham-28",
+  "license": "ISC",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
