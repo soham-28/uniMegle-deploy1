@@ -176,17 +176,25 @@ export default function VideoChat() {
       }
     }
     pc.ontrack = (event) => {
-      console.log('Received remote track:', event.track.kind)
+      console.log('Received remote track:', event.track.kind, 'enabled:', event.track.enabled, 'readyState:', event.track.readyState)
       // Aggregate tracks into one MediaStream for the video element
       if (!remoteStreamRef.current) remoteStreamRef.current = new MediaStream()
       if (event.track && !remoteStreamRef.current.getTracks().includes(event.track)) {
         remoteStreamRef.current.addTrack(event.track)
         console.log('Added track to remote stream. Total tracks:', remoteStreamRef.current.getTracks().length)
+        
+        // Log track details
+        event.track.onended = () => console.log('Remote track ended:', event.track.kind)
+        event.track.onmute = () => console.log('Remote track muted:', event.track.kind)
+        event.track.onunmute = () => console.log('Remote track unmuted:', event.track.kind)
       }
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = remoteStreamRef.current
         setRemoteReady(true)
-        console.log('Set remote video srcObject')
+        console.log('Set remote video srcObject, stream active:', remoteStreamRef.current.active)
+        
+        // Force video to play
+        remoteVideoRef.current.play().catch(e => console.error('Remote video play error:', e))
       }
     }
     pc.onconnectionstatechange = () => {
