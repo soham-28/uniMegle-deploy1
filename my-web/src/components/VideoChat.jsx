@@ -40,7 +40,12 @@ export default function VideoChat() {
     }
     start()
     console.log('Attempting to connect to:', import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000')
-    const s = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000', { withCredentials: true })
+    const s = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000', { 
+      withCredentials: true,
+      transports: ['websocket', 'polling'],
+      upgrade: true,
+      rememberUpgrade: true
+    })
     setSocket(s)
     
     s.on('connect_error', (error) => {
