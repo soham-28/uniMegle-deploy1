@@ -42,9 +42,12 @@ export default function VideoChat() {
     console.log('Attempting to connect to:', import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000')
     const s = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000', { 
       withCredentials: true,
-      transports: ['websocket', 'polling'],
-      upgrade: true,
-      rememberUpgrade: true
+      transports: ['polling', 'websocket'],
+      forceNew: true,
+      timeout: 60000,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5
     })
     setSocket(s)
     
