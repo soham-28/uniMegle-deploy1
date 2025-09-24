@@ -5,10 +5,12 @@ const userToSocket = new Map();
 
 function pairSockets(socketA, socketB) {
   const roomId = [socketA.id, socketB.id].sort().join(':');
+  console.log('Creating room:', roomId, 'with sockets:', socketA.id, socketB.id);
   socketA.join(roomId);
   socketB.join(roomId);
   socketA.emit('matched', { roomId, peerId: socketB.id, role: 'caller' });
   socketB.emit('matched', { roomId, peerId: socketA.id, role: 'callee' });
+  console.log('Sent matched events to both sockets');
 }
 
 export function registerSignaling(io) {
@@ -55,7 +57,11 @@ export function registerSignaling(io) {
     socket.on('signal', ({ roomId, data }) => {
       // eslint-disable-next-line no-console
       console.log('signal', socket.id, roomId, data?.type || 'candidate')
-      socket.to(roomId).emit('signal', { from: socket.id, data });
+      if (roomId && data) {
+        socket.to(roomId).emit('signal', { from: socket.id, data });
+      } else {
+        console.error('Invalid signal data:', { roomId, data })
+      }
     });
 
     socket.on('leave', ({ roomId }) => {
